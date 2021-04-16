@@ -5,7 +5,7 @@ js/html simple sin frameworks.
 */
 // https://www.learnrxjs.io/learn-rxjs/recipes/space-invaders-game
 
-const { fromEvent, combineLatest, interval } = rxjs;
+const { fromEvent, interval } = rxjs;
 const operator = rxjs.operators;
 
 const empty = 0;
@@ -213,7 +213,7 @@ const paint = (
 
 
 const spaceInvaders$ = interval(100).pipe(
-  operator.withLatestFrom(
+  operator.withLatestFrxm(
     fromEvent(document, 'keydown').pipe(
       operator.startWith({ code: '' }),
       operator.takeUntil(fromEvent(document, 'keyup')),
