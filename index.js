@@ -1,3 +1,10 @@
+/*
+Nos basamos fuertemente en el enlace que está abajo, este contiene la lógica del juego,
+sin embargo, tuvimos que adaptarlo a los requerimientos de js vanilla, 2 jugadores y 
+js/html simple sin frameworks.
+*/
+// https://www.learnrxjs.io/learn-rxjs/recipes/space-invaders-game
+
 const { fromEvent, combineLatest, interval } = rxjs;
 const operator = rxjs.operators;
 
