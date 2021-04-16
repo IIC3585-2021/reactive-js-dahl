@@ -1,51 +1,9 @@
 const { fromEvent, combineLatest, interval } = rxjs;
 const operator = rxjs.operators;
-/**
- * 
- * @param {*} val 
- * añade elementos al html
- */
-function print(val) {
-  let el = document.createElement('p');
-  el.innerText = val;
-  document.body.appendChild(el);
-}
-
-/**
- * ejemplo observable, produce un data stream de 2 elementos
- */
-//const observable = rxjs.Observable.create((observer) => {
-//  observer.next('hh');
-//  observer.next('ww');
-//});
-//observable.subscribe((val) => print(val));
-
-/**
- * observable que genera un stream con los eventos de click 
- */
-//const clicks = fromEvent(document, 'click')
-//               .pipe(operator.map(count => count +1, 0))
-//               .subscribe(count => console.log(count));
-
-
-/**
- * observable que genera un stream con los eventos de keydown 
- */
-//const keyDown= fromEvent(document, 'keydown');
-//keyDown.subscribe((keyDownEvent) => console.log(keyDownEvent));
-//
-
-//combineLatest(
-//  interval(100),
-//  fromEvent(document, 'keydown')
-//  .pipe(
-//    operator.startWith({key: ''}),
-//    operator.tap()
-//  )
-//).subscribe((e) => console.log(e));
 
 const empty = 0;
-const player = 1;
+const player1 = 1;
+const player2 = 4;
 const invader = 2;
 const shot = 3;
 const noOfInvadersRows = 6;
@@ -78,8 +36,10 @@ const invadersDirection = (state) =>
 
 const drawGame = (state) => (
   keepShipWithinGame(state),
+  keepShipZWithinGame(state),
   (state.game = clearGame()),
-  (state.game[state.game.length - 1][state.shipY] = player),
+  (state.game[state.game.length - 1][state.shipY] = player1),
+  (state.game[state.game.length - 1][state.shipZ] = player2),
   state.invaders.forEach(i => (state.game[i.x][i.y] = invader)),
   state.invadersShoots.forEach(s => (state.game[s.x][s.y] = shot)),
   state.shoots.forEach(s => (state.game[s.x][s.y] = shot)),
@@ -92,8 +52,10 @@ const addInvaderShoot = state =>
   );
 
 const collision = (e1, e2) => e1.x === e2.x && e1.y === e2.y;
+
 const filterOutCollisions = (c1, c2) =>
   c1.filter(e1 => !c2.find(e2 => collision(e1, e2)));
+
 const updateScore = (state) =>
   state.shoots.find(s => state.invaders.find(i => collision(s, i)))
     ? state.score + 1
@@ -103,8 +65,9 @@ const updateState = (state) => ({
   delta: state.delta,
   game: drawGame(state),
   shipY: state.shipY,
+  shipZ: state.shipZ,
   playerLives: state.invadersShoots.some(
-    e => e.x === gameSize - 1 && e.y === state.shipY
+    e => e.x === gameSize - 1 && (e.y === state.shipY || e.y === state.shipZ)
   )
     ? state.playerLives - 1
     : state.playerLives,
@@ -142,16 +105,31 @@ const keepShipWithinGame = (state)=> (
   (state.shipY = state.shipY >= gameSize - 1 ? gameSize - 1 : state.shipY)
 );
 
-const updateShipY = (state, input)=>
+
+const keepShipZWithinGame = (state)=> (
+  (state.shipZ = state.shipZ < 0 ? 0 : state.shipZ),
+  (state.shipZ = state.shipZ >= gameSize - 1 ? gameSize - 1 : state.shipZ)
+);
+
+const updateShipY = (state, input)=>{
   input.key !== 'ArrowLeft' && input.key !== 'ArrowRight'
     ? state.shipY
     : (state.shipY -= input.key === 'ArrowLeft' ? 1 : -1);
+ input.key !== 'KeyA' && input.key !== 'KeyD'
+    ? state.shipZ
+    : (state.shipZ-= input.key === 'KeyA' ? 1 : -1); 
+  };
 
-const addShots = (state, input) =>
+const addShots = (state, input) =>{
   (state.shoots =
     input.key === 'ArrowUp'
       ? [...state.shoots, gameObject(gameSize - 2, state.shipY)]
-      : state.shoots);
+      : state.shoots),
+    (state.shoots =
+    input.key === 'KeyW'
+      ? [...state.shoots, gameObject(gameSize - 2, state.shipZ)]
+      : state.shoots)
+    };
 
 const isGameOver = (state) =>
   state.playerLives <= 0 ||
@@ -162,6 +140,7 @@ const initialState = {
   delta: 0,
   game: clearGame(),
   shipY: 10,
+  shipZ: 20,
   playerLives: 3,
   isGameOver: false,
   score: 0,
@@ -193,8 +172,10 @@ const createElem = col => {
   elem.style['background-color'] =
     col === empty
       ? 'white'
-      : col === player
+      : col === player1
       ? 'cornflowerblue'
+      : col == player2
+      ? 'red'
       : col === invader
       ? 'gray'
       : 'silver';
